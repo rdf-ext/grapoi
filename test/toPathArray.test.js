@@ -52,7 +52,7 @@ describe('toPathArray', () => {
     grapoiEqual(result, [ptr1, ptr2])
   })
 
-  it('should wrap Terms given in an array into a Path array', () => {
+  it('should wrap terms given in an array into a Path array', () => {
     const dataset = factory.dataset()
     const ptr1 = new Path({ dataset, factory, term: ns.ex.start1 })
     const ptr2 = new Path({ dataset, factory, term: ns.ex.start2 })
@@ -60,6 +60,18 @@ describe('toPathArray', () => {
     const result = toPathArray([ptr1.term, ptr2.term], { dataset, factory })
 
     grapoiEqual(result, [ptr1, ptr2])
+  })
+
+  it('should wrap terms and graphs given in an array into a Path array', () => {
+    const dataset = factory.dataset()
+    const ptr1 = new Path({ dataset, factory, term: ns.ex.start1, graph: ns.ex.graph1 })
+    const ptr2 = new Path({ dataset, factory, term: ns.ex.start1, graph: ns.ex.graph2 })
+    const ptr3 = new Path({ dataset, factory, term: ns.ex.start2, graph: ns.ex.graph1 })
+    const ptr4 = new Path({ dataset, factory, term: ns.ex.start2, graph: ns.ex.graph2 })
+
+    const result = toPathArray([ns.ex.start1, ns.ex.start2], { dataset, factory, graph: [ns.ex.graph1, ns.ex.graph2] })
+
+    grapoiEqual(result, [ptr1, ptr2, ptr3, ptr4])
   })
 
   it('should throw an error if the value can\'t be converted', () => {

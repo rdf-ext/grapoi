@@ -618,7 +618,7 @@ single.trim = () => {
     ]
   })
 
-  const expectedPtr = new Path({ dataset, term: ptr.term })
+  const expectedPtr = new Path({ dataset, graph: ptr.edges[1].graph, term: ptr.term })
 
   return { ...others, dataset, expectedPtr, ptr, quads }
 }

@@ -25,8 +25,11 @@ class Path {
     this.dataset = dataset || edges[edges.length - 1].dataset
     this.edges = edges
     this.factory = factory
-    this._term = term
     this._graph = graph
+
+    if (edges.length === 0) {
+      this._term = term
+    }
   }
 
   get edge () {

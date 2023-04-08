@@ -1,4 +1,5 @@
 import Edge from '../../Edge.js'
+import Grapoi from '../../Grapoi.js'
 import Path from '../../Path.js'
 import PathList from '../../PathList.js'
 import { createPathListDataset } from './createDataset.js'
@@ -35,6 +36,13 @@ triples.in = [
   [ns.ex.end2, ns.ex.propertyB, ns.ex.start1],
   [ns.ex.end2, ns.ex.propertyB, ns.ex.start2],
   [ns.ex.end3, ns.ex.propertyA, ns.ex.start2]
+]
+
+triples.inBlankNode = [
+  [links[0], ns.ex.propertyA, ns.ex.start1],
+  [links[0], ns.ex.propertyB, ns.ex.start1],
+  [links[0], ns.ex.propertyA, ns.ex.start2],
+  [links[0], ns.ex.propertyB, ns.ex.start2]
 ]
 
 triples.inPath = [
@@ -100,6 +108,13 @@ triples.out = [
   [ns.ex.start2, ns.ex.propertyA, ns.ex.end3]
 ]
 
+triples.outBlankNode = [
+  [ns.ex.start1, ns.ex.propertyA, links[0]],
+  [ns.ex.start1, ns.ex.propertyB, links[0]],
+  [ns.ex.start2, ns.ex.propertyA, links[0]],
+  [ns.ex.start2, ns.ex.propertyB, links[0]]
+]
+
 triples.outPath = [
   [ns.ex.start1, ns.ex.propertyA, links[0]],
   [ns.ex.start2, ns.ex.propertyB, links[1]],
@@ -115,6 +130,34 @@ triples.outPath = [
   [links[3], ns.ex.propertyB, ns.ex.end2]
 ]
 
+triples.rebase = [
+  [ns.ex(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, ns.ex.end],
+  [ns.other(''), ns.other.propertyA, links[1]],
+  [links[1], ns.other.propertyB, ns.other.end]
+]
+
+triples.rebased = [
+  [ns.exCom(''), ns.exCom.propertyA, links[0]],
+  [links[0], ns.exCom.propertyB, ns.exCom.end],
+  [ns.other(''), ns.other.propertyA, links[1]],
+  [links[1], ns.other.propertyB, ns.other.end]
+]
+
+triples.replace = [
+  [ns.ex(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, ns.ex.end],
+  [ns.other(''), ns.other.propertyA, links[1]],
+  [links[1], ns.other.propertyB, ns.other.end]
+]
+
+triples.replaced = [
+  [ns.exCom(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, ns.ex.end],
+  [ns.other(''), ns.other.propertyA, links[1]],
+  [links[1], ns.other.propertyB, ns.other.end]
+]
+
 const multi = {}
 
 multi.addIn = () => {
@@ -126,6 +169,25 @@ multi.addIn = () => {
     subjects: terms.ends,
     objects: terms.starts
   })
+}
+
+multi.addInNoSubject = () => {
+  const { edges, expectedPtrs, ...others } = createPathListDataset(triples.inBlankNode, {
+    start: 'object',
+    end: 'subject',
+    add: false,
+    subjects: [links[0]],
+    objects: terms.starts
+  })
+
+  const expectedGrapois = [
+    new Grapoi({ ptrs: [expectedPtrs[0]] }),
+    new Grapoi({ ptrs: [expectedPtrs[1]] }),
+    new Grapoi({ ptrs: [expectedPtrs[2]] }),
+    new Grapoi({ ptrs: [expectedPtrs[3]] })
+  ]
+
+  return { ...others, edges, expectedGrapois, expectedPtrs }
 }
 
 multi.addInGraphs = () => {
@@ -148,26 +210,49 @@ multi.addInPath = () => {
     subjects: terms.ends
   })
 
-  const ptrList = new PathList({
-    factory,
-    ptrs: [
-      new Path({ edges: [edges[0], edges[2]], factory }),
-      new Path({ edges: [edges[1], edges[3]], factory })
-    ]
-  })
-
-  const expectedPtrLists = [
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[4]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[5]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[6]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[7]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[8]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[9]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[10]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[11]] })] })
+  const ptrs = [
+    new Path({ edges: [edges[0], edges[2]], factory }),
+    new Path({ edges: [edges[1], edges[3]], factory })
   ]
 
-  return { ...others, edges, expectedPtrLists, ptrList }
+  const ptrList = new PathList({ factory, ptrs })
+
+  const grapoi = new Grapoi({ factory, ptrs })
+
+  const expectedPaths = [
+    [new Path({ edges: [edges[0], edges[2], edges[4]] })],
+    [new Path({ edges: [edges[0], edges[2], edges[5]] })],
+    [new Path({ edges: [edges[0], edges[2], edges[6]] })],
+    [new Path({ edges: [edges[0], edges[2], edges[7]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[8]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[9]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[10]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[11]] })]
+  ]
+
+  const expectedPtrLists = [
+    new PathList({ ptrs: expectedPaths[0] }),
+    new PathList({ ptrs: expectedPaths[1] }),
+    new PathList({ ptrs: expectedPaths[2] }),
+    new PathList({ ptrs: expectedPaths[3] }),
+    new PathList({ ptrs: expectedPaths[4] }),
+    new PathList({ ptrs: expectedPaths[5] }),
+    new PathList({ ptrs: expectedPaths[6] }),
+    new PathList({ ptrs: expectedPaths[7] })
+  ]
+
+  const expectedGrapois = [
+    new Grapoi({ ptrs: expectedPaths[0] }),
+    new Grapoi({ ptrs: expectedPaths[1] }),
+    new Grapoi({ ptrs: expectedPaths[2] }),
+    new Grapoi({ ptrs: expectedPaths[3] }),
+    new Grapoi({ ptrs: expectedPaths[4] }),
+    new Grapoi({ ptrs: expectedPaths[5] }),
+    new Grapoi({ ptrs: expectedPaths[6] }),
+    new Grapoi({ ptrs: expectedPaths[7] })
+  ]
+
+  return { ...others, edges, expectedGrapois, expectedPtrLists, grapoi, ptrList }
 }
 
 multi.addList = () => {
@@ -205,6 +290,23 @@ multi.addOut = () => {
   })
 }
 
+multi.addOutNoObject = () => {
+  const { edges, expectedPtrs, ...others } = createPathListDataset(triples.outBlankNode, {
+    add: false,
+    subjects: terms.starts,
+    objects: [links[0]]
+  })
+
+  const expectedGrapois = [
+    new Grapoi({ ptrs: [expectedPtrs[0]] }),
+    new Grapoi({ ptrs: [expectedPtrs[1]] }),
+    new Grapoi({ ptrs: [expectedPtrs[2]] }),
+    new Grapoi({ ptrs: [expectedPtrs[3]] })
+  ]
+
+  return { ...others, edges, expectedGrapois, expectedPtrs }
+}
+
 multi.addOutGraphs = () => {
   return createPathListDataset(triples.out, {
     add: false,
@@ -220,30 +322,63 @@ multi.addOutPath = () => {
     objects: terms.ends
   })
 
-  const ptrList = new PathList({
-    factory,
-    ptrs: [
-      new Path({ edges: [edges[0], edges[2]], factory }),
-      new Path({ edges: [edges[1], edges[3]], factory })
-    ]
-  })
-
-  const expectedPtrLists = [
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[4]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[5]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[6]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[0], edges[2], edges[7]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[8]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[9]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[10]] })] }),
-    new PathList({ ptrs: [new Path({ edges: [edges[1], edges[3], edges[11]] })] })
+  const ptrs = [
+    new Path({ edges: [edges[0], edges[2]], factory }),
+    new Path({ edges: [edges[1], edges[3]], factory })
   ]
 
-  return { ...others, edges, expectedPtrLists, ptrList }
+  const ptrList = new PathList({ factory, ptrs })
+
+  const grapoi = new Grapoi({ factory, ptrs })
+
+  const expectedPaths = [
+    [new Path({ edges: [edges[0], edges[2], edges[4]] })],
+    [new Path({ edges: [edges[0], edges[2], edges[5]] })],
+    [new Path({ edges: [edges[0], edges[2], edges[6]] })],
+    [new Path({ edges: [edges[0], edges[2], edges[7]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[8]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[9]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[10]] })],
+    [new Path({ edges: [edges[1], edges[3], edges[11]] })]
+  ]
+
+  const expectedPtrLists = [
+    new PathList({ ptrs: expectedPaths[0] }),
+    new PathList({ ptrs: expectedPaths[1] }),
+    new PathList({ ptrs: expectedPaths[2] }),
+    new PathList({ ptrs: expectedPaths[3] }),
+    new PathList({ ptrs: expectedPaths[4] }),
+    new PathList({ ptrs: expectedPaths[5] }),
+    new PathList({ ptrs: expectedPaths[6] }),
+    new PathList({ ptrs: expectedPaths[7] })
+  ]
+
+  const expectedGrapois = [
+    new Grapoi({ ptrs: expectedPaths[0] }),
+    new Grapoi({ ptrs: expectedPaths[1] }),
+    new Grapoi({ ptrs: expectedPaths[2] }),
+    new Grapoi({ ptrs: expectedPaths[3] }),
+    new Grapoi({ ptrs: expectedPaths[4] }),
+    new Grapoi({ ptrs: expectedPaths[5] }),
+    new Grapoi({ ptrs: expectedPaths[6] }),
+    new Grapoi({ ptrs: expectedPaths[7] })
+  ]
+
+  return { ...others, edges, expectedGrapois, expectedPtrLists, grapoi, ptrList }
 }
 
 multi.any = () => {
   return createPathListDataset([], { terms: [null] })
+}
+
+multi.best = () => {
+  const { dataset, ...others } = createPathListDataset(triples.inBlankNode, {
+    subjects: [ns.ex.start1, ns.ex.start1]
+  })
+
+  const expectedGrapoi = new Grapoi({ dataset, term: ns.ex.start2 })
+
+  return { expectedGrapoi, ...others }
 }
 
 multi.clonePtrs = () => {
@@ -340,15 +475,17 @@ multi.execute = () => {
     [ns.ex.start2, ns.ex.propertyC, ns.ex.deadEnd]
   ])
 
-  const expectedPtrList = new PathList({
-    ptrs: [
-      new Path({ edges: [edges[0]] }),
-      new Path({ edges: [edges[0], edges[1]] }),
-      new Path({ edges: [edges[2]] })
-    ]
-  })
+  const ptrs = [
+    new Path({ edges: [edges[0]] }),
+    new Path({ edges: [edges[0], edges[1]] }),
+    new Path({ edges: [edges[2]] })
+  ]
 
-  return { ...others, dataset, edges, expectedPtrList }
+  const expectedPtrList = new PathList({ ptrs })
+
+  const expectedGrapoi = new Grapoi({ ptrs })
+
+  return { ...others, dataset, edges, expectedGrapoi, expectedPtrList }
 }
 
 multi.executeAll = () => {
@@ -360,22 +497,24 @@ multi.executeAll = () => {
     [ns.ex.start2, ns.ex.propertyA, ns.ex.deadEnd]
   ])
 
-  const expectedPtrList = new PathList({
-    ptrs: [
-      new Path({
-        edges: [
-          new Edge({ dataset, quad: quads[0], start: 'subject', end: 'object' }),
-          new Edge({ dataset, quad: quads[1], start: 'object', end: 'subject' })
-        ]
-      }),
-      new Path({
-        edges: [
-          new Edge({ dataset, quad: quads[2], start: 'subject', end: 'object' }),
-          new Edge({ dataset, quad: quads[3], start: 'object', end: 'subject' })
-        ]
-      })
-    ]
-  })
+  const ptrs = [
+    new Path({
+      edges: [
+        new Edge({ dataset, quad: quads[0], start: 'subject', end: 'object' }),
+        new Edge({ dataset, quad: quads[1], start: 'object', end: 'subject' })
+      ]
+    }),
+    new Path({
+      edges: [
+        new Edge({ dataset, quad: quads[2], start: 'subject', end: 'object' }),
+        new Edge({ dataset, quad: quads[3], start: 'object', end: 'subject' })
+      ]
+    })
+  ]
+
+  const expectedPtrList = new PathList({ ptrs })
+
+  const expectedGrapoi = new Grapoi({ ptrs })
 
   const instructions = [{
     start: 'subject',
@@ -388,7 +527,7 @@ multi.executeAll = () => {
     predicates: [predicates[1]]
   }]
 
-  return { ...others, dataset, expectedPtrList, instructions, predicates, quads }
+  return { ...others, dataset, expectedGrapoi, expectedPtrList, instructions, predicates, quads }
 }
 
 multi.in = () => {
@@ -423,7 +562,13 @@ multi.iterator = () => {
     terms: [term]
   }))
 
-  return { ...others, expectedPtrLists }
+  const expectedGrapois = terms.map(term => new PathList({
+    dataset,
+    factory,
+    terms: [term]
+  }))
+
+  return { ...others, expectedGrapois, expectedPtrLists }
 }
 
 multi.hasIn = () => {
@@ -465,7 +610,9 @@ multi.list = () => {
 
   const ptrList = new PathList({ dataset, factory, terms: [edges[0].term] })
 
-  return { ...others, dataset, edges, items: terms.items, ptrList }
+  const grapoi = new Grapoi({ dataset, factory, terms: [edges[0].term] })
+
+  return { ...others, dataset, edges, grapoi, items: terms.items, ptrList }
 }
 
 multi.out = () => {
@@ -505,6 +652,42 @@ multi.quads = () => {
   return { ...others, ptrList }
 }
 
+multi.rebase = () => {
+  const { ...others } = createPathListDataset(triples.rebase, { terms: [ns.ex('')] })
+
+  const expectedTerm = ns.exCom('')
+
+  const expectedGrapoi = new Grapoi({
+    dataset: factory.dataset(triples.rebased.map(parts => factory.quad(...parts))),
+    term: expectedTerm
+  })
+
+  return { expectedGrapoi, expectedTerm, ...others }
+}
+
+multi.replace = () => {
+  const { ...others } = createPathListDataset(triples.replace, { terms: [ns.ex('')] })
+
+  const expectedTerm = ns.exCom('')
+
+  const expectedGrapoi = new Grapoi({
+    dataset: factory.dataset(triples.replaced.map(parts => factory.quad(...parts))),
+    term: expectedTerm
+  })
+
+  return { expectedGrapoi, expectedTerm, ...others }
+}
+
+multi.score = () => {
+  const { dataset, ...others } = createPathListDataset(triples.inBlankNode, {
+    subjects: [ns.ex.start1, ns.ex.start1]
+  })
+
+  const expectedGrapoi = new Grapoi({ dataset, term: [ns.ex.start2, ns.ex.start1] })
+
+  return { expectedGrapoi, ...others }
+}
+
 multi.trim = () => {
   const { dataset, edges, ...others } = createPathListDataset(triples.outPath)
 
@@ -525,14 +708,14 @@ multi.trim = () => {
   const expectedPtrList = new PathList({
     factory,
     ptrs: [
-      new Path({ dataset, term: edges[4].term }),
-      new Path({ dataset, term: edges[5].term }),
-      new Path({ dataset, term: edges[6].term }),
-      new Path({ dataset, term: edges[7].term }),
-      new Path({ dataset, term: edges[8].term }),
-      new Path({ dataset, term: edges[9].term }),
-      new Path({ dataset, term: edges[10].term }),
-      new Path({ dataset, term: edges[11].term })
+      new Path({ dataset, graph: edges[4].graph, term: edges[4].term }),
+      new Path({ dataset, graph: edges[5].graph, term: edges[5].term }),
+      new Path({ dataset, graph: edges[6].graph, term: edges[6].term }),
+      new Path({ dataset, graph: edges[7].graph, term: edges[7].term }),
+      new Path({ dataset, graph: edges[8].graph, term: edges[8].term }),
+      new Path({ dataset, graph: edges[9].graph, term: edges[9].term }),
+      new Path({ dataset, graph: edges[10].graph, term: edges[10].term }),
+      new Path({ dataset, graph: edges[11].graph, term: edges[11].term })
     ]
   })
 

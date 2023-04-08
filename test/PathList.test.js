@@ -690,6 +690,15 @@ describe('PathList', () => {
 
       grapoiEqual(result, expectedPtrList)
     })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.hasIn()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
+    })
   })
 
   describe('.hasOut', () => {
@@ -714,6 +723,15 @@ describe('PathList', () => {
 
       grapoiEqual(result, expectedPtrList)
     })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.hasOut()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
+    })
   })
 
   describe('.in', () => {
@@ -737,6 +755,15 @@ describe('PathList', () => {
       const result = ptrList.in(predicates, subjects)
 
       grapoiEqual(result, expectedPtrList)
+    })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.in()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
     })
   })
 
@@ -911,6 +938,15 @@ describe('PathList', () => {
         strictEqual(result.ptrs[index].factory, ptrList.factory)
       }
     })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.node([null])
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
+    })
   })
 
   describe('.out', () => {
@@ -934,6 +970,15 @@ describe('PathList', () => {
       const result = ptrList.out(predicates, objects)
 
       grapoiEqual(result, expectedPtrList)
+    })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.out()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
     })
   })
 
@@ -981,6 +1026,15 @@ describe('PathList', () => {
 
       grapoiEqual(result, expectedPtrList)
     })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.trim()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
+    })
   })
 
   describe('[Symbol.iterator]', () => {
@@ -994,6 +1048,10 @@ describe('PathList', () => {
       const { expectedPtrLists, ptrList } = datasets.iterator()
 
       const result = [...ptrList]
+
+      for (const item of result) {
+        strictEqual(item instanceof PathList, true)
+      }
 
       grapoiEqual(result, expectedPtrLists)
     })

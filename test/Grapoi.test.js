@@ -1,22 +1,21 @@
-/* import { deepStrictEqual, strictEqual } from 'assert'
+import { notStrictEqual, strictEqual, throws } from 'assert'
 import { describe, it } from 'mocha'
-import toCanonical from 'rdf-dataset-ext/toCanonical.js'
+import { datasetEqual } from 'rdf-test/assert.js'
+import Grapoi from '../Grapoi.js'
 import Path from '../Path.js'
-import PathList from '../PathList.js'
 import datasets from './support/datasets.multi.js'
 import factory from './support/factory.js'
-import * as ns from './support/namespaces.js'
-import toJSON from './support/toJSON.js'
+import { grapoiEqual } from './support/toJSON.js'
 
 describe('Grapoi', () => {
   it('should be a constructor', () => {
-    strictEqual(typeof PathList, 'function')
+    strictEqual(typeof Grapoi, 'function')
   })
 
   it('should assign the given factory', () => {
     const dataset = factory.dataset()
 
-    const nodeList = new PathList({ dataset, factory })
+    const nodeList = new Grapoi({ dataset, factory })
 
     strictEqual(nodeList.factory, factory)
   })
@@ -24,7 +23,7 @@ describe('Grapoi', () => {
   it('should use an any Path ptr if no ptrs are given', () => {
     const dataset = factory.dataset()
 
-    const nodeList = new PathList({ dataset })
+    const nodeList = new Grapoi({ dataset })
 
     strictEqual(nodeList.ptrs.length, 1)
     strictEqual(nodeList.ptrs[0] instanceof Path, true)
@@ -32,429 +31,630 @@ describe('Grapoi', () => {
   })
 
   it('should use the given ptrs', () => {
-    const dataset = factory.dataset()
-    const ptr0 = new Path({ dataset, term: ns.ex.start1 })
-    const ptr1 = new Path({ dataset, term: ns.ex.start2 })
-    const ptrs = new Set([ptr0, ptr1])
+    const { ptrs } = datasets.constructorPtrs()
 
-    const nodeList = new PathList({ ptrs })
+    const grapoi = new Grapoi({ ptrs })
 
-    strictEqual(nodeList.ptrs.length, 2)
-    strictEqual(nodeList.ptrs[0], ptr0)
-    strictEqual(nodeList.ptrs[1], ptr1)
+    strictEqual(grapoi.ptrs.length, ptrs.length)
+
+    for (let index = 0; index < ptrs.length; index++) {
+      strictEqual(grapoi.ptrs[index], ptrs[index])
+    }
+  })
+
+  it('should create a Path ptr for the given term', () => {
+    const { dataset, terms } = datasets.default()
+    const term = terms[0]
+
+    const grapoi = new Grapoi({ dataset, term })
+
+    strictEqual(grapoi.ptrs.length, 1)
+
+    strictEqual(grapoi.ptrs[0] instanceof Path, true)
+    strictEqual(grapoi.ptrs[0].term.equals(term), true)
   })
 
   it('should create a Path ptr for each of the given terms', () => {
-    const dataset = factory.dataset()
-    const terms = new Set([ns.ex.start1, ns.ex.start2])
+    const { dataset, terms } = datasets.default()
 
-    const nodeList = new PathList({ dataset, terms })
+    const grapoi = new Grapoi({ dataset, terms })
 
-    strictEqual(nodeList.ptrs.length, 2)
-    strictEqual(nodeList.ptrs[0] instanceof Path, true)
-    strictEqual(ns.ex.start1.equals(nodeList.ptrs[0].term), true)
-    strictEqual(nodeList.ptrs[1] instanceof Path, true)
-    strictEqual(ns.ex.start2.equals(nodeList.ptrs[1].term), true)
+    strictEqual(grapoi.ptrs.length, terms.length)
+
+    for (let index = 0; index < terms.length; index++) {
+      strictEqual(grapoi.ptrs[index] instanceof Path, true)
+      strictEqual(grapoi.ptrs[index].term.equals(terms[index]), true)
+    }
+  })
+
+  it('should create a Path ptr for the given term and graph', () => {
+    const { dataset, graphs, terms } = datasets.constructorGraphs()
+    const graph = graphs[0]
+    const term = terms[0]
+
+    const grapoi = new Grapoi({ dataset, graph, term })
+
+    strictEqual(grapoi.ptrs.length, 1)
+
+    strictEqual(grapoi.ptrs[0].term.equals(term), true)
+    strictEqual(grapoi.ptrs[0].graph.equals(graph), true)
+  })
+
+  it('should create a Path ptr for each of the given terms and graphs', () => {
+    const { dataset, graphs, terms } = datasets.constructorGraphs()
+
+    const grapoi = new Grapoi({ dataset, graphs, terms })
+
+    strictEqual(grapoi.ptrs.length, terms.length * graphs.length)
+
+    for (let index = 0; index < terms.length * graphs.length; index++) {
+      strictEqual(grapoi.ptrs[index].term.equals(terms[Math.floor(index / 2)]), true)
+      strictEqual(grapoi.ptrs[index].graph.equals(graphs[index % 2]), true)
+    }
   })
 
   it('should create a Path ptr for each of the given terms with the given factory', () => {
-    const dataset = factory.dataset()
-    const terms = new Set([ns.ex.start1, ns.ex.start2])
+    const { dataset, terms } = datasets.default()
 
-    const nodeList = new PathList({ dataset, factory, terms })
+    const grapoi = new Grapoi({ dataset, factory, terms })
 
-    strictEqual(nodeList.ptrs.length, 2)
-    strictEqual(nodeList.ptrs[0].factory, factory)
-    strictEqual(nodeList.ptrs[1].factory, factory)
+    strictEqual(grapoi.ptrs.length, terms.length)
+
+    for (let index = 0; index < terms.length; index++) {
+      strictEqual(grapoi.ptrs[index].factory, factory)
+    }
+  })
+
+  it('should prioritize ptrs over terms', () => {
+    const { dataset, ptrList, terms } = datasets.constructorPtrsVsTerms()
+
+    const result = new Grapoi({ dataset, factory, ptrs: ptrList.ptrs, terms })
+
+    grapoiEqual(result, ptrList)
   })
 
   describe('.addIn', () => {
     it('should be a method', () => {
-      const { nodeListStart } = datasets.addIn()
+      const { grapoi } = datasets.default()
 
-      strictEqual(typeof nodeListStart.addIn, 'function')
+      strictEqual(typeof grapoi.addIn, 'function')
     })
 
     it('should return itself', () => {
-      const { nodeListStart } = datasets.addIn()
+      const { grapoi, objects, predicates } = datasets.addIn()
 
-      const result = nodeListStart.addIn(new Set([ns.ex.property]), new Set([ns.ex.end]))
+      const result = grapoi.addIn(predicates, objects)
 
-      strictEqual(result, nodeListStart)
+      strictEqual(result, grapoi)
+    })
+
+    it('should add quads for the given predicates and blank node if no subject is given', () => {
+      const { expectedQuads, grapoi, predicates } = datasets.addInNoSubject()
+
+      grapoi.addIn(predicates)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
     })
 
     it('should add quads for the given predicates and subjects', () => {
-      const { nodeListStart, quads } = datasets.addIn()
+      const { expectedQuads, grapoi, predicates, subjects } = datasets.addIn()
 
-      nodeListStart.addIn(new Set([ns.ex.propertyA, ns.ex.propertyB]), new Set([ns.ex.end1, ns.ex.end2]))
+      grapoi.addIn(predicates, subjects)
 
-      const result = [...nodeListStart.dataset]
-
-      strictEqual(toCanonical(result), toCanonical(quads))
+      datasetEqual(grapoi.dataset, expectedQuads)
     })
 
-    it('should call the callback function with a node list argument', () => {
-      const { nodeList, nodeListStart } = datasets.addIn()
+    it('should add quads for the given predicates, subjects, and graphs', () => {
+      const { expectedQuads, grapoi, predicates, subjects } = datasets.addInGraphs()
+
+      grapoi.addIn(predicates, subjects)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
+    })
+
+    it('should call the callback function with a grapoi object for the new path', () => {
       const result = []
+      const { expectedGrapois, grapoi, predicates, subjects } = datasets.addInPath()
 
-      nodeListStart.addIn(
-        new Set([ns.ex.propertyA, ns.ex.propertyB]),
-        new Set([ns.ex.end1, ns.ex.end2]),
-        nodeList => result.push(nodeList)
-      )
+      grapoi.addIn(predicates, subjects, item => result.push(item))
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      grapoiEqual(result, expectedGrapois)
+    })
+
+    it('should call the callback function as second argument with a grapoi object for the new path', () => {
+      const result = []
+      const { expectedGrapois, grapoi, predicates } = datasets.addInNoSubject()
+
+      grapoi.addIn(predicates, item => result.push(item))
+
+      grapoiEqual(result, expectedGrapois)
+    })
+  })
+
+  describe('.addList', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.addList, 'function')
+    })
+
+    it('should return itself', () => {
+      const { grapoi, predicates, items } = datasets.addList()
+
+      const result = grapoi.addList(predicates, items)
+
+      strictEqual(result, grapoi)
+    })
+
+    it('should create an empty list if an empty item list is given', () => {
+      const { expectedQuads, grapoi, predicates, items } = datasets.addListEmpty()
+
+      grapoi.addList(predicates, items)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
+    })
+
+    it('should add the given items to the list', () => {
+      const { expectedQuads, items, grapoi, predicates } = datasets.addList()
+
+      grapoi.addList(predicates, items)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
+    })
+
+    it('should add the given items in the defined graphs to the list', () => {
+      const { expectedQuads, items, grapoi, predicates } = datasets.addListGraphs()
+
+      grapoi.addList(predicates, items)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
+    })
+
+    it('should throw an error if the ptr is an any ptr', () => {
+      const { items, grapoi, predicates } = datasets.any()
+
+      throws(() => {
+        grapoi.addList(predicates, items)
+      })
     })
   })
 
   describe('.addOut', () => {
     it('should be a method', () => {
-      const { nodeListStart } = datasets.addOut()
+      const { grapoi } = datasets.default()
 
-      strictEqual(typeof nodeListStart.addOut, 'function')
+      strictEqual(typeof grapoi.addOut, 'function')
     })
 
     it('should return itself', () => {
-      const { nodeListStart } = datasets.addOut()
+      const { objects, grapoi, predicates } = datasets.addOut()
 
-      const result = nodeListStart.addOut(new Set([ns.ex.property]), new Set([ns.ex.end]))
+      const result = grapoi.addOut(predicates, objects)
 
-      strictEqual(result, nodeListStart)
+      strictEqual(result, grapoi)
     })
 
     it('should add quads for the given predicates and objects', () => {
-      const { nodeListStart, quads } = datasets.addOut()
+      const { expectedQuads, objects, grapoi, predicates } = datasets.addOut()
 
-      nodeListStart.addOut(new Set([ns.ex.propertyA, ns.ex.propertyB]), new Set([ns.ex.end1, ns.ex.end2]))
+      grapoi.addOut(predicates, objects)
 
-      const result = [...nodeListStart.dataset]
-
-      strictEqual(toCanonical(result), toCanonical(quads))
+      datasetEqual(grapoi.dataset, expectedQuads)
     })
 
-    it('should call the callback function with a node object for the new node', () => {
-      const { nodeList, nodeListStart } = datasets.addOut()
+    it('should add quads for the given predicates and blank node if no object is given', () => {
+      const { expectedQuads, grapoi, predicates } = datasets.addOutNoObject()
+
+      grapoi.addOut(predicates)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
+    })
+
+    it('should add quads for the given predicates, objects, and graphs', () => {
+      const { expectedQuads, objects, grapoi, predicates } = datasets.addOutGraphs()
+
+      grapoi.addOut(predicates, objects)
+
+      datasetEqual(grapoi.dataset, expectedQuads)
+    })
+
+    it('should call the callback function with a path object for the new path', () => {
       const result = []
+      const { expectedGrapois, objects, grapoi, predicates } = datasets.addOutPath()
 
-      nodeListStart.addOut(
-        new Set([ns.ex.propertyA, ns.ex.propertyB]),
-        new Set([ns.ex.end1, ns.ex.end2]),
-        nodeList => result.push(nodeList)
-      )
+      grapoi.addOut(predicates, objects, item => result.push(item))
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      grapoiEqual(result, expectedGrapois)
+    })
+
+    it('should call the callback function as second argument with a grapoi object for the new path', () => {
+      const result = []
+      const { expectedGrapois, grapoi, predicates } = datasets.addOutNoObject()
+
+      grapoi.addOut(predicates, item => result.push(item))
+
+      grapoiEqual(result, expectedGrapois)
+    })
+  })
+
+  describe('.best', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.best, 'function')
+    })
+
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.best()
+
+      const result = grapoi.best(obj => {
+        return obj.ptrs.map(ptr => {
+          return {
+            dataset: ptr.dataset,
+            score: parseInt(ptr.term.value.match(/(\d+)/)[1]),
+            term: ptr.term
+          }
+        })
+      })
+
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should contain a single Path for the ptr with the highest score', () => {
+      const { expectedGrapoi, grapoi } = datasets.best()
+
+      const result = grapoi.best(obj => {
+        return obj.ptrs.map(ptr => {
+          return {
+            dataset: ptr.dataset,
+            score: parseInt(ptr.term.value.match(/(\d+)/)[1]),
+            term: ptr.term
+          }
+        })
+      })
+
+      grapoiEqual(result, expectedGrapoi)
+    })
+  })
+
+  describe('.deleteIn', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.deleteIn, 'function')
+    })
+
+    it('should return itself', () => {
+      const { grapoi, predicates } = datasets.deleteIn()
+
+      const result = grapoi.deleteIn(predicates)
+
+      strictEqual(result, grapoi)
+    })
+
+    it('should delete the quads matching O->S for all given predicates', () => {
+      const { dataset, expectedQuads, grapoi, predicates } = datasets.deleteIn()
+
+      grapoi.deleteIn(predicates)
+
+      datasetEqual(dataset, expectedQuads)
+    })
+
+    it('should delete the quads matching O->S for all given predicates and subjects', () => {
+      const { dataset, expectedQuads, grapoi, predicates, subjects } = datasets.deleteInSubjects()
+
+      grapoi.deleteIn(predicates, subjects)
+
+      datasetEqual(dataset, expectedQuads)
+    })
+  })
+
+  describe('.deleteList', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.deleteList, 'function')
+    })
+
+    it('should return itself', () => {
+      const { grapoi } = datasets.deleteList()
+
+      const result = grapoi.deleteList([null])
+
+      strictEqual(result, grapoi)
+    })
+
+    it('should delete all quads related to the list', () => {
+      const { dataset, expectedQuads, grapoi, predicates } = datasets.deleteList()
+
+      grapoi.deleteList(predicates)
+
+      datasetEqual(dataset, expectedQuads)
+    })
+  })
+
+  describe('.deleteOut', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.deleteOut, 'function')
+    })
+
+    it('should return itself', () => {
+      const { grapoi, predicates } = datasets.deleteOut()
+
+      const result = grapoi.deleteOut(predicates)
+
+      strictEqual(result, grapoi)
+    })
+
+    it('should delete the quads matching S->O for all given predicates', () => {
+      const { dataset, expectedQuads, grapoi, predicates } = datasets.deleteOut()
+
+      grapoi.deleteOut(predicates)
+
+      datasetEqual(dataset, expectedQuads)
+    })
+
+    it('should delete the quads matching S->O for all given predicates and objects', () => {
+      const { dataset, expectedQuads, objects, grapoi, predicates } = datasets.deleteOutObjects()
+
+      grapoi.deleteOut(predicates, objects)
+
+      datasetEqual(dataset, expectedQuads)
     })
   })
 
   describe('.execute', () => {
-    it('should support quantifier one', () => {
-      const { nodeList, nodeListStart } = datasets.traverseOne()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
 
-      const result = nodeListStart.execute({ predicates: new Set([ns.ex.propertyA, ns.ex.propertyB]) })
+      const result = grapoi.execute({})
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-
-    it('should support quantifier oneOrMore', () => {
-      const { nodeList, nodeListStart } = datasets.traverseOneOrMore()
-
-      const result = nodeListStart.execute({
-        quantifier: 'oneOrMore',
-        predicates: new Set([ns.ex.propertyA, ns.ex.propertyB])
-      })
-
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-
-    it('should support quantifier zeroOrMore', () => {
-      const { nodeList, nodeListStart } = datasets.traverseZeroOrMore()
-
-      const result = nodeListStart.execute({
-        quantifier: 'zeroOrMore',
-        predicates: new Set([ns.ex.propertyA, ns.ex.propertyB])
-      })
-
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-
-    it('should support quantifier zeroOrOne', () => {
-      const { nodeList, nodeListStart } = datasets.traverseZeroOrOne()
-
-      const result = nodeListStart.execute({
-        quantifier: 'zeroOrOne',
-        predicates: new Set([ns.ex.propertyA, ns.ex.propertyB])
-      })
-
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
     })
   })
 
   describe('.executeAll', () => {
-    it('should execture all given instructions', () => {
-      const { instructions, nodeList, nodeListStart } = datasets.executeAll()
+    it('should return a new Grapoi instance', () => {
+      const { instructions, grapoi } = datasets.executeAll()
 
-      const result = nodeListStart.executeAll(instructions)
+      const result = grapoi.executeAll(instructions)
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-  })
-
-  describe('.extend', () => {
-    it('should be a method', () => {
-      const { nodeListStart } = datasets.extend()
-
-      strictEqual(typeof nodeListStart.extend, 'function')
-    })
-
-    it('should copy the factory', () => {
-      const { nodeList, nodeListStart } = datasets.extend()
-
-      const result = nodeListStart.extend(nodeList.ptrs[0], nodeList.ptrs[1])
-
-      strictEqual(result.factory, nodeListStart.factory)
-    })
-
-    it('should return a PathList extended by the given ptr', () => {
-      const { nodeList, nodeListStart } = datasets.extend()
-
-      const result = nodeListStart.extend(nodeList.ptrs[0], nodeList.ptrs[1])
-
-      strictEqual(result.ptrs[0], nodeList.ptrs[1])
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
     })
   })
 
   describe('.filter', () => {
-    it('should call the callback function with a PathList, index, and an array of all PathList objects for each ptr', () => {
-      const args = []
-      const { nodeListStart } = datasets.out()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
 
-      nodeListStart.filter((nodeList, index, array) => args.push({ nodeList, index, array }))
+      const result = grapoi.filter(() => true)
 
-      strictEqual(args.length, 2)
-      strictEqual(args[0].nodeList.term.equals(ns.ex.start1), true)
-      strictEqual(args[0].index, 0)
-      strictEqual(Array.isArray(args[0].array), true)
-      strictEqual(args[0].array[0] instanceof PathList, true)
-      strictEqual(args[0].array[0].term.equals(ns.ex.start1), true)
-      strictEqual(args[0].array[1] instanceof PathList, true)
-      strictEqual(args[0].array[1].term.equals(ns.ex.start2), true)
-      strictEqual(args[1].nodeList.term.equals(ns.ex.start2), true)
-      strictEqual(args[1].index, 1)
-      strictEqual(Array.isArray(args[1].array), true)
-      strictEqual(args[1].array[0] instanceof PathList, true)
-      strictEqual(args[1].array[0].term.equals(ns.ex.start1), true)
-      strictEqual(args[1].array[1] instanceof PathList, true)
-      strictEqual(args[1].array[1].term.equals(ns.ex.start2), true)
-    })
-
-    it('should return a new PathList object', () => {
-      const { nodeListStart } = datasets.out()
-
-      const result = nodeListStart.filter(nodeList => nodeList.term.equals(ns.ex.start2))
-
-      strictEqual(result instanceof PathList, true)
-    })
-
-    it('should return a PathList object with ptrs where callback returned true', () => {
-      const { nodeListStart } = datasets.out()
-
-      const result = nodeListStart.filter(nodeList => nodeList.term.equals(ns.ex.start2))
-
-      deepStrictEqual(toJSON(result.ptrs[0]), toJSON(nodeListStart.ptrs[1]))
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
     })
   })
 
   describe('.hasIn', () => {
-    it('should return all nodes matching O->S for all given properties', () => {
-      const { nodeList, nodeListStart } = datasets.hasIn()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
 
-      const result = nodeListStart.hasIn(new Set([ns.ex.propertyA, ns.ex.propertyB]))
+      const result = grapoi.hasIn()
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-
-    it('should return all nodes matching O->S for all given properties and subjects', () => {
-      const { nodeList, nodeListStart } = datasets.hasIn2()
-
-      const result = nodeListStart.hasIn(new Set([ns.ex.propertyA, ns.ex.propertyB]), new Set([ns.ex.end2, ns.ex.end3]))
-
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
     })
   })
 
   describe('.hasOut', () => {
-    it('should return all nodes matching S->O for all given properties', () => {
-      const { nodeList, nodeListStart } = datasets.hasOut()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
 
-      const result = nodeListStart.hasOut(new Set([ns.ex.propertyA, ns.ex.propertyB]))
+      const result = grapoi.hasOut()
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-
-    it('should return all nodes matching S->O for all given properties and subjects', () => {
-      const { nodeList, nodeListStart } = datasets.hasOut2()
-
-      const result = nodeListStart.hasOut(new Set([ns.ex.propertyA, ns.ex.propertyB]), new Set([ns.ex.end2, ns.ex.end3]))
-
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
     })
   })
 
   describe('.in', () => {
-    it('should return all nodes traversing O->S for all given properties', () => {
-      const { nodeList, nodeListStart } = datasets.in()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
 
-      const result = nodeListStart.in(new Set([ns.ex.propertyA, ns.ex.propertyB]))
+      const result = grapoi.in()
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-
-    it('should return all nodes traversing O->S for all given properties and subjects', () => {
-      const { nodeList, nodeListStart } = datasets.in2()
-
-      const result = nodeListStart.in(new Set([ns.ex.propertyA, ns.ex.propertyB]), new Set([ns.ex.end2, ns.ex.end3]))
-
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
-    })
-  })
-
-  describe('.isList', () => {
-    it('should return true if the ptr is a list', () => {
-      const { nodeListStart } = datasets.list()
-
-      strictEqual(nodeListStart.isList(), true)
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
     })
   })
 
   describe('.list', () => {
     it('should return an iterator that loops over all items of the list', () => {
-      const { nodeListStart } = datasets.list()
+      const { items, grapoi } = datasets.list()
 
-      const result = nodeListStart.list()
+      const result = grapoi.list()
 
       strictEqual(typeof result[Symbol.iterator], 'function')
 
-      const items = [...result]
+      const resultItems = [...result]
 
-      strictEqual(items.length, 2)
-      strictEqual(items[0] instanceof PathList, true)
-      strictEqual(items[0].term.equals(ns.ex.end1), true)
-      strictEqual(items[1] instanceof PathList, true)
-      strictEqual(items[1].term.equals(ns.ex.end2), true)
-    })
-  })
+      strictEqual(resultItems.length, items.length)
 
-  describe('.map', () => {
-    it('should call the callback function with a PathList, index, and an array of all PathList objects for each ptr', () => {
-      const args = []
-      const { nodeListStart } = datasets.out()
-
-      nodeListStart.map((nodeList, index, array) => args.push({ nodeList, index, array }))
-
-      strictEqual(args.length, 2)
-      strictEqual(args[0].nodeList.term.equals(ns.ex.start1), true)
-      strictEqual(args[0].index, 0)
-      strictEqual(Array.isArray(args[0].array), true)
-      strictEqual(args[0].array[0] instanceof PathList, true)
-      strictEqual(args[0].array[0].term.equals(ns.ex.start1), true)
-      strictEqual(args[0].array[1] instanceof PathList, true)
-      strictEqual(args[0].array[1].term.equals(ns.ex.start2), true)
-      strictEqual(args[1].nodeList.term.equals(ns.ex.start2), true)
-      strictEqual(args[1].index, 1)
-      strictEqual(Array.isArray(args[1].array), true)
-      strictEqual(args[1].array[0] instanceof PathList, true)
-      strictEqual(args[1].array[0].term.equals(ns.ex.start1), true)
-      strictEqual(args[1].array[1] instanceof PathList, true)
-      strictEqual(args[1].array[1].term.equals(ns.ex.start2), true)
-    })
-
-    it('should return an array', () => {
-      const { nodeListStart } = datasets.out()
-
-      const result = nodeListStart.map(nodeList => nodeList.term)
-
-      strictEqual(Array.isArray(result), true)
-    })
-
-    it('should return an array of return values of the callback function', () => {
-      const { nodeListStart } = datasets.out()
-
-      const result = nodeListStart.map(nodeList => nodeList.term)
-
-      strictEqual(result.length, 2)
-      strictEqual(result[0].equals(ns.ex.start1), true)
-      strictEqual(result[1].equals(ns.ex.start2), true)
+      for (let index = 0; index < items.length; index++) {
+        strictEqual(resultItems[index] instanceof Grapoi, true)
+        strictEqual(resultItems[index].term.equals(items[index]), true)
+      }
     })
   })
 
   describe('.node', () => {
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
+
+      const result = grapoi.node()
+
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+  })
+
+  describe('.rebase', () => {
     it('should be a method', () => {
-      const { nodeListStart } = datasets.out()
+      const { grapoi } = datasets.default()
 
-      strictEqual(typeof nodeListStart.node, 'function')
+      strictEqual(typeof grapoi.rebase, 'function')
     })
 
-    it('should create a PathList object with the given terms wrapped in Path objects', () => {
-      const { nodeListStart } = datasets.out()
-      const term0 = factory.blankPath()
-      const term1 = factory.literal('test')
-      const term2 = ns.ex.start
-      const terms = new Set([term0, term1, term2])
+    it('should throw an error if no base is given', () => {
+      const { grapoi } = datasets.default()
 
-      const result = nodeListStart.node(terms)
-
-      strictEqual(result instanceof PathList, true)
-      strictEqual(result.ptrs.length, 3)
-      strictEqual(result.ptrs[0] instanceof Path, true)
-      strictEqual(result.ptrs[0].term, term0)
-      strictEqual(result.ptrs[1] instanceof Path, true)
-      strictEqual(result.ptrs[1].term, term1)
-      strictEqual(result.ptrs[2] instanceof Path, true)
-      strictEqual(result.ptrs[2].term, term2)
+      throws(() => {
+        grapoi.rebase()
+      }, {
+        message: 'base parameter is required'
+      })
     })
 
-    it('should create the Path objects with the factory of the PathList object', () => {
-      const { nodeListStart } = datasets.out()
-      const terms = new Set([factory.blankPath(), factory.literal('test'), ns.ex.start])
+    it('should return a new Grapoi object', () => {
+      const { expectedTerm, grapoi } = datasets.rebase()
 
-      const result = nodeListStart.node(terms)
+      const result = grapoi.rebase(expectedTerm)
 
-      strictEqual(result.ptrs[0].factory, nodeListStart.factory)
-      strictEqual(result.ptrs[1].factory, nodeListStart.factory)
-      strictEqual(result.ptrs[2].factory, nodeListStart.factory)
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should rebase the dateset', () => {
+      const { expectedGrapoi, expectedTerm, grapoi } = datasets.rebase()
+
+      const result = grapoi.rebase(expectedTerm)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
+
+    it('should support base argument given as ptr', () => {
+      const { expectedGrapoi, grapoi } = datasets.rebase()
+
+      const result = grapoi.rebase(expectedGrapoi)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
+  })
+
+  describe('.replace', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.replace, 'function')
+    })
+
+    it('should throw an error if no base is given', () => {
+      const { grapoi } = datasets.default()
+
+      throws(() => {
+        grapoi.replace()
+      }, {
+        message: 'replacement parameter is required'
+      })
+    })
+
+    it('should return a new Grapoi object', () => {
+      const { expectedTerm, grapoi } = datasets.replace()
+
+      const result = grapoi.replace(expectedTerm)
+
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should replace the given term in the dateset', () => {
+      const { expectedGrapoi, expectedTerm, grapoi } = datasets.replace()
+
+      const result = grapoi.replace(expectedTerm)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
+
+    it('should support replacement argument given as ptr', () => {
+      const { expectedGrapoi, grapoi } = datasets.replace()
+
+      const result = grapoi.replace(expectedGrapoi)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
     })
   })
 
   describe('.out', () => {
-    it('should return all nodes traversing S->O for all given properties', () => {
-      const { nodeList, nodeListStart } = datasets.out()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
 
-      const result = nodeListStart.out(new Set([ns.ex.propertyA, ns.ex.propertyB]))
+      const result = grapoi.out()
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+  })
+
+  describe('.score', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.score, 'function')
     })
 
-    it('should return all nodes traversing S->O for all given properties and subjects', () => {
-      const { nodeList, nodeListStart } = datasets.out2()
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.score()
 
-      const result = nodeListStart.out(new Set([ns.ex.propertyA, ns.ex.propertyB]), new Set([ns.ex.end2, ns.ex.end3]))
+      const result = grapoi.score(obj => {
+        return obj.ptrs.map(ptr => {
+          return {
+            dataset: ptr.dataset,
+            score: parseInt(ptr.term.value.match(/(\d+)/)[1]),
+            term: ptr.term
+          }
+        })
+      })
 
-      deepStrictEqual(toJSON(result), toJSON(nodeList))
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should contain a Paths sorted by score', () => {
+      const { expectedGrapoi, grapoi } = datasets.score()
+
+      const result = grapoi.score(obj => {
+        return obj.ptrs.map(ptr => {
+          return {
+            dataset: ptr.dataset,
+            score: parseInt(ptr.term.value.match(/(\d+)/)[1]),
+            term: ptr.term
+          }
+        })
+      })
+
+      grapoiEqual(result, expectedGrapoi)
     })
   })
 
   describe('[Symbol.iterator]', () => {
-    it('should return an iterator that loops over all ptrs wrapped into a PathList object', () => {
-      const { nodeListStart } = datasets.out()
+    it('should return an iterator that loops over all ptrs wrapped into a Grapoi object', () => {
+      const { expectedGrapois, grapoi } = datasets.iterator()
 
-      const result = [...nodeListStart]
+      const result = [...grapoi]
 
-      strictEqual(result.length, 2)
-      strictEqual(result[0] instanceof PathList, true)
-      deepStrictEqual(toJSON(result[0].ptrs[0]), toJSON(nodeListStart.ptrs[0]))
-      strictEqual(result[1] instanceof PathList, true)
-      deepStrictEqual(toJSON(result[1].ptrs[0]), toJSON(nodeListStart.ptrs[1]))
+      for (const item of result) {
+        strictEqual(item instanceof Grapoi, true)
+      }
+
+      grapoiEqual(result, expectedGrapois)
     })
   })
 })
-*/
