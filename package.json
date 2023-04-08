@@ -38,7 +38,6 @@
     "c8": "^7.11.0",
     "housemd": "^0.1.0",
     "mocha": "^9.2.0",
-    "rdf-dataset-ext": "^1.0.1",
     "rdf-test": "^0.1.0",
     "stricter-standard": "^0.2.0"
   }

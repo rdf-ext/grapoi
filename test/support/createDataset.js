@@ -1,5 +1,6 @@
 import TermMap from '@rdfjs/term-map'
 import Edge from '../../Edge.js'
+import Grapoi from '../../Grapoi.js'
 import Path from '../../Path.js'
 import PathList from '../../PathList.js'
 import factory from './factory.js'
@@ -19,7 +20,7 @@ function createPathDataset (data, {
   const dataset = factory.dataset(add ? quads : [])
   const edges = quads.map(quad => new Edge({ dataset, end, quad, start }))
   const ptr = new Path({ dataset, factory, graph, term })
-  const ptrs = edges.map(edge => new Path({ dataset, edges: [edge], factory }))
+  const ptrs = edges.map(edge => new Path({ dataset, edges: [edge], factory, graph }))
 
   expect = expect || Object.keys(quads)
 
@@ -75,13 +76,13 @@ function createPathListDataset (data, {
   const dataset = factory.dataset(add ? quads : [])
   const edges = quads.map(quad => new Edge({ dataset, end, quad, start }))
   const ptrList = new PathList({ dataset, factory, graphs, terms })
+  const grapoi = new Grapoi({ dataset, factory, graphs, terms })
   const ptrs = edges.map(edge => new Path({ dataset, edges: [edge], factory }))
 
   expect = expect || Object.keys(quads)
 
   const expectedPtrs = expect.map(index => ptrs[index])
   const expectedPtrList = new PathList({ factory, ptrs: expectedPtrs })
-  const expectedPtrLists = expectedPtrs.map(ptr => new PathList({ factory, ptrs: [ptr] }))
   const expectedQuads = expect ? expect.map(index => quads[index]) : quads
 
   return {
@@ -90,11 +91,11 @@ function createPathListDataset (data, {
     quads,
     dataset,
     edges,
+    grapoi,
     ptrs,
     ptrList,
     expectedPtrs,
     expectedPtrList,
-    expectedPtrLists,
     expectedQuads,
     predicates,
     ...args

@@ -18,9 +18,7 @@ class Grapoi extends PathList {
     }
 
     if (!ptrs && terms) {
-      const graph = graphs && graphs.length === 1 ? graphs[0] : null
-
-      ptrs = toPathArray(terms, { dataset, factory, graph })
+      ptrs = toPathArray(terms, { dataset, factory, graph: graphs })
     }
 
     super({ dataset, factory, ptrs, graphs })

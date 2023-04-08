@@ -3,66 +3,70 @@ import Edge from '../../Edge.js'
 import Path from '../../Path.js'
 import PathList from '../../PathList.js'
 
-function arrayToJSON (array) {
+function arrayToJSON (array, { blankNodeIds }) {
   if (!Array.isArray(array)) {
     return null
   }
 
-  return array.map(obj => toJSON(obj))
+  return array.map(obj => toJSON(obj, { blankNodeIds }))
 }
 
-function edgeToJSON (step) {
+function edgeToJSON (step, { blankNodeIds }) {
   if (!(step instanceof Edge)) {
     return null
   }
 
   return {
-    quad: quadToJSON(step.quad),
+    quad: quadToJSON(step.quad, { blankNodeIds }),
     start: step.start,
     end: step.end
   }
 }
 
-function listToJSON (list) {
+function listToJSON (list, { blankNodeIds }) {
   if (!(list instanceof PathList)) {
     return null
   }
 
   return {
-    ptrs: list.ptrs.map(ptr => toJSON(ptr))
+    ptrs: list.ptrs.map(ptr => toJSON(ptr, { blankNodeIds }))
   }
 }
 
-function pathToJSON (path) {
+function pathToJSON (path, { blankNodeIds }) {
   if (!(path instanceof Path)) {
     return null
   }
 
   const json = {
-    edges: path.edges.map(step => edgeToJSON(step))
+    edges: path.edges.map(step => edgeToJSON(step, { blankNodeIds }))
+  }
+
+  if (path._graph) {
+    json.graph = path._graph.value
   }
 
   if (path._term) {
-    json.startTerm = termToJSON(path._term)
+    json.startTerm = termToJSON(path._term, { blankNodeIds })
   }
 
   return json
 }
 
-function quadToJSON (quad) {
+function quadToJSON (quad, { blankNodeIds }) {
   if (quad.termType !== 'Quad') {
     return null
   }
 
   return {
-    subject: termToJSON(quad.subject),
-    predicate: termToJSON(quad.predicate),
-    object: termToJSON(quad.object),
-    graph: termToJSON(quad.graph)
+    subject: termToJSON(quad.subject, { blankNodeIds }),
+    predicate: termToJSON(quad.predicate, { blankNodeIds }),
+    object: termToJSON(quad.object, { blankNodeIds }),
+    graph: termToJSON(quad.graph, { blankNodeIds })
   }
 }
 
-function termToJSON (term) {
+function termToJSON (term, { blankNodeIds }) {
   if (!term.termType) {
     return null
   }
@@ -72,8 +76,16 @@ function termToJSON (term) {
     value: term.value
   }
 
+  if (term.termType === 'BlankNode') {
+    if (!blankNodeIds.has(term.value)) {
+      blankNodeIds.set(term.value, `b${blankNodeIds.size + 1}`)
+    }
+
+    json.value = blankNodeIds.get(term.value)
+  }
+
   if (term.datatype) {
-    json.datatype = termToJSON(term.datatype)
+    json.datatype = termToJSON(term.datatype, { blankNodeIds })
   }
 
   if (term.language) {
@@ -83,11 +95,11 @@ function termToJSON (term) {
   return json
 }
 
-function toJSON (obj) {
-  return arrayToJSON(obj) ||
-    edgeToJSON(obj) ||
-    listToJSON(obj) ||
-    pathToJSON(obj)
+function toJSON (obj, { blankNodeIds = new Map() } = {}) {
+  return arrayToJSON(obj, { blankNodeIds }) ||
+    edgeToJSON(obj, { blankNodeIds }) ||
+    listToJSON(obj, { blankNodeIds }) ||
+    pathToJSON(obj, { blankNodeIds })
 }
 
 function grapoiEqual (actual, expected) {
