@@ -277,6 +277,51 @@ describe('Grapoi', () => {
     })
   })
 
+  describe('.base', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.base, 'function')
+    })
+
+    it('should throw an error if no base is given', () => {
+      const { grapoi } = datasets.default()
+
+      throws(() => {
+        grapoi.base()
+      }, {
+        message: 'base parameter is required'
+      })
+    })
+
+    it('should return a new Grapoi object', () => {
+      const { expectedTerm, grapoi } = datasets.base()
+
+      const result = grapoi.base(expectedTerm)
+
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should base the dateset', () => {
+      const { expectedGrapoi, expectedTerm, grapoi } = datasets.base()
+
+      const result = grapoi.base(expectedTerm)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
+
+    it('should support base argument given as ptr', () => {
+      const { expectedGrapoi, grapoi } = datasets.base()
+
+      const result = grapoi.base(expectedGrapoi)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
+  })
+
   describe('.best', () => {
     it('should be a method', () => {
       const { grapoi } = datasets.default()
