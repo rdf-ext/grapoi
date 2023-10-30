@@ -26,6 +26,20 @@ terms.graphs = [ns.ex.graph1, ns.ex.graph2]
 
 const triples = {}
 
+triples.base = [
+  [factory.namedNode(''), factory.namedNode('/propertyA'), links[0]],
+  [links[0], factory.namedNode('/propertyB'), factory.namedNode('/end')],
+  [ns.other(''), ns.other.propertyA, links[1]],
+  [links[1], ns.other.propertyB, ns.other.end]
+]
+
+triples.based = [
+  [ns.ex(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, ns.ex.end],
+  [ns.other(''), ns.other.propertyA, links[1]],
+  [links[1], ns.other.propertyB, ns.other.end]
+]
+
 triples.in = [
   [ns.ex.end1, ns.ex.propertyA, ns.ex.start1],
   [ns.ex.end1, ns.ex.propertyA, ns.ex.start2],
@@ -369,6 +383,19 @@ multi.addOutPath = () => {
 
 multi.any = () => {
   return createPathListDataset([], { terms: [null] })
+}
+
+multi.base = () => {
+  const { ...others } = createPathListDataset(triples.base, { terms: [ns.ex('')] })
+
+  const expectedTerm = ns.ex('')
+
+  const expectedGrapoi = new Grapoi({
+    dataset: factory.dataset(triples.based.map(parts => factory.quad(...parts))),
+    term: expectedTerm
+  })
+
+  return { expectedGrapoi, expectedTerm, ...others }
 }
 
 multi.best = () => {

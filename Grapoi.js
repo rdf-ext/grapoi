@@ -1,3 +1,4 @@
+import { baseDataset, baseTerm } from './lib/base.js'
 import { rebaseDataset } from './lib/rebase.js'
 import { replaceDataset } from './lib/replace.js'
 import sortByScore from './lib/sortByScore.js'
@@ -94,6 +95,25 @@ class Grapoi extends PathList {
     }
 
     return super.addOut(this._toTermArray(predicates), this._toTermArray(objects), callback)
+  }
+
+  /**
+   * Base all terms with a relative IRI with the given base.
+   * @param {Grapoi|Grapoi[]|Term|Term[]} base Base of the terms
+   * @returns {Constructor} Instance with a single pointer with the term based
+   */
+  base (base) {
+    if (!base) {
+      throw new Error('base parameter is required')
+    }
+
+    base = this._toTerm(base)
+
+    for (const ptr of this.ptrs) {
+      baseDataset(base, { factory: this.factory })(ptr.dataset)
+    }
+
+    return this.node(baseTerm(base, { factory: this.factory })(this.term))
   }
 
   /**
