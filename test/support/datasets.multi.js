@@ -158,6 +158,26 @@ triples.rebased = [
   [links[1], ns.other.propertyB, ns.other.end]
 ]
 
+triples.rebaseEmpty = [
+  [factory.namedNode(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, factory.namedNode('end')]
+]
+
+triples.rebasedEmpty = [
+  [ns.exCom(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, ns.exCom.end]
+]
+
+triples.rebaseRelative = [
+  [factory.namedNode('http'), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, factory.namedNode('httpend')]
+]
+
+triples.rebasedRelative = [
+  [ns.exCom(''), ns.ex.propertyA, links[0]],
+  [links[0], ns.ex.propertyB, ns.exCom.end]
+]
+
 triples.replace = [
   [ns.ex(''), ns.ex.propertyA, links[0]],
   [links[0], ns.ex.propertyB, ns.ex.end],
@@ -686,6 +706,32 @@ multi.rebase = () => {
 
   const expectedGrapoi = new Grapoi({
     dataset: factory.dataset(triples.rebased.map(parts => factory.quad(...parts))),
+    term: expectedTerm
+  })
+
+  return { expectedGrapoi, expectedTerm, ...others }
+}
+
+multi.rebaseEmpty = () => {
+  const { ...others } = createPathListDataset(triples.rebaseEmpty, { terms: [factory.namedNode('')] })
+
+  const expectedTerm = ns.exCom('')
+
+  const expectedGrapoi = new Grapoi({
+    dataset: factory.dataset(triples.rebasedEmpty.map(parts => factory.quad(...parts))),
+    term: expectedTerm
+  })
+
+  return { expectedGrapoi, expectedTerm, ...others }
+}
+
+multi.rebaseRelative = () => {
+  const { ...others } = createPathListDataset(triples.rebaseRelative, { terms: [factory.namedNode('http')] })
+
+  const expectedTerm = ns.exCom('')
+
+  const expectedGrapoi = new Grapoi({
+    dataset: factory.dataset(triples.rebasedRelative.map(parts => factory.quad(...parts))),
     term: expectedTerm
   })
 
