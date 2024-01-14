@@ -1,3 +1,4 @@
+import TermSet from '@rdfjs/term-set'
 import Edge from './Edge.js'
 import * as ns from './lib/namespaces.js'
 
@@ -248,6 +249,7 @@ class Processor {
   static traverseMore ({ ptrs, end, start, subjects, predicates, objects, graphs, callback } = {}) {
     let result = [...ptrs]
     let current
+    let last
 
     do {
       current = []
@@ -259,8 +261,14 @@ class Processor {
         ]
       }
 
+      if (last) {
+        current = current.filter(ptr => !last.has(ptr.term))
+      }
+
       ptrs = current
       result = [...result, ...current]
+
+      last = new TermSet(result.map(ptr => ptr.term))
     } while (current.length > 0)
 
     return result
