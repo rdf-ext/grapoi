@@ -499,6 +499,38 @@ describe('Processor', () => {
 
       grapoiEqual(result, expectedQuads)
     })
+
+    it('should stop traversing if the start and end of an edge are the same', () => {
+      const { expectedQuads, predicates, ptr } = datasets.traverseZeroOrMoreSelfRef()
+
+      const result = Processor.traverseMore({
+        ptrs: [ptr],
+        end: 'object',
+        start: 'subject',
+        subjects: [null],
+        predicates,
+        objects: [null],
+        graphs: [null]
+      })
+
+      grapoiEqual(result, expectedQuads)
+    })
+
+    it('should stop traversing if the end of an edge has been previously seen', () => {
+      const { expectedQuads, predicates, ptr } = datasets.traverseZeroOrMoreSelfRef2()
+
+      const result = Processor.traverseMore({
+        ptrs: [ptr],
+        end: 'object',
+        start: 'subject',
+        subjects: [null],
+        predicates,
+        objects: [null],
+        graphs: [null]
+      })
+
+      grapoiEqual(result, expectedQuads)
+    })
   })
 
   describe('.traverseOne', () => {

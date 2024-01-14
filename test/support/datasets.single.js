@@ -592,6 +592,36 @@ single.traverseZeroOrMore = () => {
   return { ...others, dataset, edges, expectedQuads }
 }
 
+single.traverseZeroOrMoreSelfRef = () => {
+  const { dataset, edges, ...others } = createPathDataset([
+    [ns.ex.start, ns.ex.propertyA, ns.ex.end],
+    [ns.ex.end, ns.ex.propertyB, ns.ex.end]
+  ])
+
+  const expectedQuads = [
+    new Path({ dataset, term: edges[0].startTerm }),
+    new Path({ edges: [edges[0]] })
+  ]
+
+  return { ...others, dataset, edges, expectedQuads }
+}
+
+single.traverseZeroOrMoreSelfRef2 = () => {
+  const { dataset, edges, ...others } = createPathDataset([
+    [ns.ex.start, ns.ex.propertyA, ns.ex.end1],
+    [ns.ex.end1, ns.ex.propertyB, ns.ex.end2],
+    [ns.ex.end2, ns.ex.propertyB, ns.ex.start]
+  ])
+
+  const expectedQuads = [
+    new Path({ dataset, term: edges[0].startTerm }),
+    new Path({ edges: [edges[0]] }),
+    new Path({ edges: [edges[0], edges[1]] })
+  ]
+
+  return { ...others, dataset, edges, expectedQuads }
+}
+
 single.traverseZeroOrOne = () => {
   const { dataset, edges, ...others } = createPathDataset([
     [ns.ex.start, ns.ex.propertyA, ns.ex.end1],
