@@ -590,6 +590,24 @@ describe('Grapoi', () => {
       grapoiEqual(result, expectedGrapoi)
       datasetEqual(result.dataset, expectedGrapoi.dataset)
     })
+
+    it('should rebase datasets with empty named nodes', () => {
+      const { expectedGrapoi, expectedTerm, grapoi } = datasets.rebaseEmpty()
+
+      const result = grapoi.rebase(expectedTerm)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
+
+    it('should rebase datasets with relative named nodes', () => {
+      const { expectedGrapoi, expectedTerm, grapoi } = datasets.rebaseRelative()
+
+      const result = grapoi.rebase(expectedTerm)
+
+      grapoiEqual(result, expectedGrapoi)
+      datasetEqual(result.dataset, expectedGrapoi.dataset)
+    })
   })
 
   describe('.replace', () => {
