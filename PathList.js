@@ -351,7 +351,8 @@ class PathList {
    * @returns {Constructor} Instance with pointers of the given terms
    */
   node (terms) {
-    const ptrs = [...terms].map(term => new Path({ dataset: this.dataset, factory: this.factory, term }))
+    const dataset = this.dataset
+    const ptrs = [...terms].map(term => new Path({ dataset, factory: this.factory, term }))
 
     return this.clone({ ptrs })
   }
