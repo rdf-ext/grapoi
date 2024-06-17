@@ -39,6 +39,6 @@
     "housemd": "^0.1.0",
     "mocha": "^10.4.0",
     "rdf-test": "^0.1.0",
-    "stricter-standard": "^0.2.0"
+    "stricter-standard": "^0.3.1"
   }
 }
