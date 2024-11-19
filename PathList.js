@@ -317,23 +317,13 @@ class PathList {
       return undefined
     }
 
-    const iterator = this.ptrs[0].list()[Symbol.iterator]()
+    const iterator = this.ptrs[0].list()
 
-    const next = () => {
-      const { done, value } = iterator.next()
-
-      if (done) {
-        return { done: true }
+    return (function* () {
+      for (const ptr of iterator) {
+        yield this.clone({ ptrs: [ptr] })
       }
-
-      return { done: false, value: this.clone({ ptrs: [value] }) }
-    }
-
-    return {
-      [Symbol.iterator]: () => {
-        return { next }
-      }
-    }
+    })();
   }
 
   /**
@@ -371,16 +361,10 @@ class PathList {
    * Create an iterator of all quads of all pointer paths.
    * @returns {Iterator<Quad>} Iterator for the quads
    */
-  quads () {
-    const pathList = this
-
-    return {
-      * [Symbol.iterator] () {
-        for (const path of pathList.ptrs) {
-          for (const edge of path.edges) {
-            yield edge.quad
-          }
-        }
+  *quads () {
+    for (const path of this.ptrs) {
+      for (const edge of path.edges) {
+        yield edge.quad
       }
     }
   }
