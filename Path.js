@@ -198,36 +198,22 @@ class Path {
     return Processor.list({ ptr: this })
   }
 
-  nodes () {
-    const path = this
-
-    const at = index => {
+  * nodes () {
+    for (let index = 0; index < this.length; index++) {
       if (this._term !== undefined) {
-        return {
+        yield {
           dataset: this.dataset,
           term: this._term
         }
-      }
-
-      if (this.edges.length > index) {
-        return {
+      } else if (this.edges.length > index) {
+        yield {
           dataset: this.edges[index].dataset,
           term: this.edges[index].startTerm
         }
-      }
-
-      if (this.edges.length === index) {
-        return {
+      } else if (this.edges.length === index) {
+        yield {
           dataset: this.edges[index - 1].dataset,
           term: this.edges[index - 1].term
-        }
-      }
-    }
-
-    return {
-      * [Symbol.iterator] () {
-        for (let index = 0; index < path.length; index++) {
-          yield at(index)
         }
       }
     }
@@ -242,15 +228,9 @@ class Path {
     })
   }
 
-  quads () {
-    const path = this
-
-    return {
-      * [Symbol.iterator] () {
-        for (const edge of path.edges) {
-          yield edge.quad
-        }
-      }
+  * quads () {
+    for (const { quad } of this.edges) {
+      yield quad
     }
   }
 
