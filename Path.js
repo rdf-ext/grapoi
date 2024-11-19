@@ -210,7 +210,7 @@ class Path {
           dataset: this.edges[index].dataset,
           term: this.edges[index].startTerm
         }
-      } else {
+      } else if (this.edges.length === index) {
         yield {
           dataset: this.edges[index - 1].dataset,
           term: this.edges[index - 1].term
