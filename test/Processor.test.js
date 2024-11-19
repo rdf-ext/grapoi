@@ -285,7 +285,7 @@ describe('Processor', () => {
       const { ptr } = datasets.isList()
 
       const result = Processor.execute({
-        ptr: ptr,
+        ptr,
         operation: 'isList'
       })
 
