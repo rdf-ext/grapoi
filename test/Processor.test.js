@@ -415,6 +415,14 @@ describe('Processor', () => {
         Array.from(Processor.list({ ptr }))
       })
     })
+
+    it('should throw an error if there are circular references', () => {
+      const { ptr } = datasets.listCircular()
+
+      throws(() => {
+        Array.from(Processor.list({ ptr }))
+      }, /Invalid list: circular reference on/)
+    })
   })
 
   describe('.traverse', () => {

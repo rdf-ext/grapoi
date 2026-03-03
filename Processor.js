@@ -193,7 +193,15 @@ class Processor {
 
     return {
       * [Symbol.iterator] () {
+        const visited = new TermSet()
+
         while (ptr && !ptr.term.equals(ns.rdf.nil)) {
+          if (visited.has(ptr.term)) {
+            throw new Error(`Invalid list: circular reference on ${ptr.value}`)
+          }
+
+          visited.add(ptr.term)
+
           const value = ptr.out([ns.rdf.first])
 
           if (value.length !== 1) {

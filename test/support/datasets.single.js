@@ -93,6 +93,14 @@ triples.listRest2 = [
   [links[0], ns.rdf.rest, ns.rdf.nil]
 ]
 
+triples.listCircular = [
+  [ns.ex.start, ns.ex.propertyA, links[0]],
+  [links[0], ns.rdf.first, ns.ex.end1],
+  [links[0], ns.rdf.rest, links[1]],
+  [links[1], ns.rdf.first, ns.ex.end2],
+  [links[1], ns.rdf.rest, links[0]]
+]
+
 triples.out = [
   [ns.ex.start, ns.ex.propertyA, ns.ex.end1],
   [ns.ex.start, ns.ex.propertyA, ns.ex.end2],
@@ -496,6 +504,14 @@ single.listRest0 = () => {
 
 single.listRest2 = () => {
   const { edges, ...others } = createPathDataset(triples.listRest2)
+
+  const ptr = new Path({ edges: [edges[0]] })
+
+  return { ...others, edges, ptr }
+}
+
+single.listCircular = () => {
+  const { edges, ...others } = createPathDataset(triples.listCircular)
 
   const ptr = new Path({ edges: [edges[0]] })
 
