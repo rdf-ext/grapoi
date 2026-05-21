@@ -188,6 +188,33 @@ describe('PathList', () => {
     })
   })
 
+  describe('.length', () => {
+    it('should be a number property', () => {
+      const ptrList = new PathList({ dataset: factory.dataset(), factory })
+
+      strictEqual(typeof ptrList.length, 'number')
+    })
+
+    it('should count all ptrs', () => {
+      const ptrList = new PathList({ factory, ptrs: [{ term: ns.ex.start1 }, { term: ns.ex.start2 }] })
+
+      strictEqual(ptrList.length, ptrList.ptrs.length)
+    })
+
+    it('should count term duplicates', () => {
+      const term = ns.ex.start1
+      const ptrList = new PathList({ factory, ptrs: [{ term }, { term }] })
+
+      strictEqual(ptrList.length, ptrList.ptrs.length)
+    })
+
+    it('should count null terms', () => {
+      const ptrList = new PathList({ factory, ptrs: [{ term: null }, { term: null }] })
+
+      strictEqual(ptrList.length, ptrList.ptrs.length)
+    })
+  })
+
   describe('.terms', () => {
     it('should be an array property', () => {
       const ptrList = new PathList({ dataset: factory.dataset(), factory })

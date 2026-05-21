@@ -67,6 +67,14 @@ class PathList {
   }
 
   /**
+   * The length of the list of pointers.
+   * @returns {number} Length of the list of pointers.
+   */
+  get length () {
+    return this.ptrs.length
+  }
+
+  /**
    * The term of the pointers if all pointers refer to a unique term.
    * @returns {Term|undefined} Term of undefined
    */
