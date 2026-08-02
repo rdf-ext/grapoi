@@ -425,6 +425,36 @@ describe('Processor', () => {
     })
   })
 
+  describe('.reifier', () => {
+    it('should be a static method', () => {
+      strictEqual(typeof Processor.reifier, 'function')
+    })
+
+    it('should return an empty array if the ptr has no edge', () => {
+      const { ptr } = datasets.any()
+
+      const result = Processor.reifier({ ptr })
+
+      strictEqual(result.length, 0)
+    })
+
+    it('should return the pointer to the reifier node of the last edge', () => {
+      const { expectedPtr, ptr } = datasets.reifier()
+
+      const result = Processor.reifier({ ptr })
+
+      grapoiEqual(result, [expectedPtr])
+    })
+
+    it('should return an empty array if there is no matching rdf:reifies quad', () => {
+      const { ptr } = datasets.reifierNotFound()
+
+      const result = Processor.reifier({ ptr })
+
+      strictEqual(result.length, 0)
+    })
+  })
+
   describe('.traverse', () => {
     it('should support quantifier one', () => {
       const { predicates, ptr, expectedPtrs } = datasets.traverseOne()
@@ -635,6 +665,28 @@ describe('Processor', () => {
         objects: [null],
         graphs: [null]
       })
+    })
+  })
+
+  describe('.tripleTerm', () => {
+    it('should be a static method', () => {
+      strictEqual(typeof Processor.tripleTerm, 'function')
+    })
+
+    it('should return undefined if the ptr has no edge', () => {
+      const { ptr } = datasets.any()
+
+      const result = Processor.tripleTerm({ ptr })
+
+      strictEqual(result, undefined)
+    })
+
+    it('should return the triple term of the last edge', () => {
+      const { expectedPtr, ptr } = datasets.tripleTerm()
+
+      const result = Processor.tripleTerm({ ptr })
+
+      strictEqual(result.equals(expectedPtr.term), true)
     })
   })
 })

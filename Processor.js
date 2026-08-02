@@ -222,6 +222,22 @@ class Processor {
     }
   }
 
+  static reifier ({ ptr }) {
+    const tripleTerm = Processor.tripleTerm({ ptr })
+
+    if (tripleTerm === undefined) {
+      return []
+    }
+
+    const results = []
+
+    for (const quad of ptr.dataset.match(null, ns.rdf.reifies, tripleTerm, ptr.graph)) {
+      results.push(ptr.extend(new Edge({ dataset: ptr.dataset, start: 'object', end: 'subject', quad })))
+    }
+
+    return results
+  }
+
   static traverse ({
     ptr,
     quantifier = 'one',
@@ -302,6 +318,16 @@ class Processor {
     }
 
     return results
+  }
+
+  static tripleTerm ({ ptr }) {
+    if (!ptr.edge) {
+      return undefined
+    }
+
+    const { subject, predicate, object } = ptr.edge.quad
+
+    return ptr.factory.quad(subject, predicate, object)
   }
 }
 

@@ -178,6 +178,20 @@ triples.rebasedRelative = [
   [links[0], ns.ex.propertyB, ns.exCom.end]
 ]
 
+const reifierNodes = [factory.blankNode(), factory.blankNode()]
+
+const reifierTripleTerms = [
+  factory.quad(ns.ex.start1, ns.ex.propertyA, ns.ex.end1),
+  factory.quad(ns.ex.start2, ns.ex.propertyB, ns.ex.end2)
+]
+
+triples.reifier = [
+  [ns.ex.start1, ns.ex.propertyA, ns.ex.end1],
+  [ns.ex.start2, ns.ex.propertyB, ns.ex.end2],
+  [reifierNodes[0], ns.rdf.reifies, reifierTripleTerms[0]],
+  [reifierNodes[1], ns.rdf.reifies, reifierTripleTerms[1]]
+]
+
 triples.replace = [
   [ns.ex(''), ns.ex.propertyA, links[0]],
   [links[0], ns.ex.propertyB, ns.ex.end],
@@ -738,6 +752,45 @@ multi.rebaseRelative = () => {
   return { expectedGrapoi, expectedTerm, ...others }
 }
 
+multi.reifier = () => {
+  const { dataset, edges, ...others } = createPathListDataset(triples.reifier)
+
+  const ptrList = new PathList({
+    factory,
+    ptrs: [
+      new Path({ edges: [edges[0]], factory }),
+      new Path({ edges: [edges[1]], factory })
+    ]
+  })
+
+  const expectedPtrList = new PathList({
+    factory,
+    ptrs: [
+      ptrList.ptrs[0].extend(new Edge({ dataset, quad: edges[2].quad, start: 'object', end: 'subject' })),
+      ptrList.ptrs[1].extend(new Edge({ dataset, quad: edges[3].quad, start: 'object', end: 'subject' }))
+    ]
+  })
+
+  const grapoi = new Grapoi({ factory, ptrs: ptrList.ptrs })
+  const expectedGrapoi = new Grapoi({ factory, ptrs: expectedPtrList.ptrs })
+
+  return { ...others, dataset, edges, expectedGrapoi, expectedPtrList, grapoi, ptrList }
+}
+
+multi.reifierNotFound = () => {
+  const { dataset, edges, ...others } = createPathListDataset(triples.reifier.slice(0, 2))
+
+  const ptrList = new PathList({
+    factory,
+    ptrs: [
+      new Path({ edges: [edges[0]], factory }),
+      new Path({ edges: [edges[1]], factory })
+    ]
+  })
+
+  return { ...others, dataset, edges, ptrList }
+}
+
 multi.replace = () => {
   const { ...others } = createPathListDataset(triples.replace, { terms: [ns.ex('')] })
 
@@ -793,6 +846,31 @@ multi.trim = () => {
   })
 
   return { ...others, dataset, edges, expectedPtrList, ptrList }
+}
+
+multi.tripleTerm = () => {
+  const { dataset, edges, ...others } = createPathListDataset(triples.reifier.slice(0, 2))
+
+  const ptrList = new PathList({
+    factory,
+    ptrs: [
+      new Path({ edges: [edges[0]], factory }),
+      new Path({ edges: [edges[1]], factory })
+    ]
+  })
+
+  const expectedPtrList = new PathList({
+    factory,
+    ptrs: [
+      new Path({ dataset, graph: edges[0].graph, term: reifierTripleTerms[0] }),
+      new Path({ dataset, graph: edges[1].graph, term: reifierTripleTerms[1] })
+    ]
+  })
+
+  const grapoi = new Grapoi({ factory, ptrs: ptrList.ptrs })
+  const expectedGrapoi = new Grapoi({ factory, ptrs: expectedPtrList.ptrs })
+
+  return { ...others, dataset, edges, expectedGrapoi, expectedPtrList, grapoi, ptrList }
 }
 
 multi.clone = multi.out

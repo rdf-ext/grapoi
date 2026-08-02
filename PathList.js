@@ -379,6 +379,14 @@ class PathList {
   }
 
   /**
+   * Traverse the graph to the reifier node(s) of the last edge of each pointer, based on rdf:reifies.
+   * @returns {Constructor} Instance with pointers of the reifier nodes
+   */
+  reifier () {
+    return this.clone({ ptrs: this.ptrs.flatMap(ptr => ptr.reifier()) })
+  }
+
+  /**
    * Trim the path of all pointers and create a new instance for the result.
    * @returns {Constructor} Instance of the trimmed pointers
    */
@@ -386,6 +394,14 @@ class PathList {
     return this.clone({
       ptrs: this.ptrs.map(ptr => ptr.trim())
     })
+  }
+
+  /**
+   * Build the RDF 1.2 triple term of the last edge of each pointer.
+   * @returns {Constructor} Instance with pointers of the triple terms
+   */
+  tripleTerm () {
+    return this.clone({ ptrs: this.ptrs.flatMap(ptr => ptr.tripleTerm()) })
   }
 
   /**

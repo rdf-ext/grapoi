@@ -1039,6 +1039,47 @@ describe('PathList', () => {
     })
   })
 
+  describe('.reifier', () => {
+    it('should be a method', () => {
+      const { ptrList } = datasets.default()
+
+      strictEqual(typeof ptrList.reifier, 'function')
+    })
+
+    it('should return an empty PathList if no ptr has an edge', () => {
+      const { ptrList } = datasets.any()
+
+      const result = ptrList.reifier()
+
+      strictEqual(result.length, 0)
+    })
+
+    it('should return the pointers to the reifier nodes of the last edge of each ptr', () => {
+      const { expectedPtrList, ptrList } = datasets.reifier()
+
+      const result = ptrList.reifier()
+
+      grapoiEqual(result, expectedPtrList)
+    })
+
+    it('should not include ptrs without a matching rdf:reifies quad', () => {
+      const { ptrList } = datasets.reifierNotFound()
+
+      const result = ptrList.reifier()
+
+      strictEqual(result.length, 0)
+    })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.reifier()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
+    })
+  })
+
   describe('.trim', () => {
     it('should be a method', () => {
       const { ptrList } = datasets.default()
@@ -1058,6 +1099,39 @@ describe('PathList', () => {
       const { ptrList } = datasets.default()
 
       const result = ptrList.trim()
+
+      strictEqual(result instanceof PathList, true)
+      notStrictEqual(result, ptrList)
+    })
+  })
+
+  describe('.tripleTerm', () => {
+    it('should be a method', () => {
+      const { ptrList } = datasets.default()
+
+      strictEqual(typeof ptrList.tripleTerm, 'function')
+    })
+
+    it('should return an empty PathList if no ptr has an edge', () => {
+      const { ptrList } = datasets.any()
+
+      const result = ptrList.tripleTerm()
+
+      strictEqual(result.length, 0)
+    })
+
+    it('should return the pointers to the triple terms of the last edge of each ptr', () => {
+      const { expectedPtrList, ptrList } = datasets.tripleTerm()
+
+      const result = ptrList.tripleTerm()
+
+      grapoiEqual(result, expectedPtrList)
+    })
+
+    it('should return a new PathList instance', () => {
+      const { ptrList } = datasets.default()
+
+      const result = ptrList.tripleTerm()
 
       strictEqual(result instanceof PathList, true)
       notStrictEqual(result, ptrList)
