@@ -122,6 +122,14 @@ triples.path = [
   [ns.ex.node, ns.ex.propertyB, ns.ex.end]
 ]
 
+const reifierNode = factory.blankNode()
+const tripleTerm = factory.quad(ns.ex.start, ns.ex.propertyA, ns.ex.end)
+
+triples.reifier = [
+  [ns.ex.start, ns.ex.propertyA, ns.ex.end],
+  [reifierNode, ns.rdf.reifies, tripleTerm]
+]
+
 const single = {}
 
 single.addIn = () => {
@@ -554,6 +562,34 @@ single.outObjects = () => {
   })
 }
 
+single.reifier = () => {
+  const { dataset, quads, ...others } = createPathDataset(triples.reifier)
+
+  const ptr = new Path({
+    edges: [
+      new Edge({ dataset, quad: quads[0], start: 'subject', end: 'object' })
+    ],
+    factory
+  })
+
+  const expectedPtr = ptr.extend(new Edge({ dataset, quad: quads[1], start: 'object', end: 'subject' }))
+
+  return { ...others, dataset, expectedPtr, ptr, quads }
+}
+
+single.reifierNotFound = () => {
+  const { dataset, quads, ...others } = createPathDataset([triples.reifier[0]])
+
+  const ptr = new Path({
+    edges: [
+      new Edge({ dataset, quad: quads[0], start: 'subject', end: 'object' })
+    ],
+    factory
+  })
+
+  return { ...others, dataset, ptr, quads }
+}
+
 single.traverseOneObject = () => {
   return createPathDataset(triples.out3, {
     expect: [0, 1, 2, 3],
@@ -665,6 +701,21 @@ single.trim = () => {
   })
 
   const expectedPtr = new Path({ dataset, graph: ptr.edges[1].graph, term: ptr.term })
+
+  return { ...others, dataset, expectedPtr, ptr, quads }
+}
+
+single.tripleTerm = () => {
+  const { dataset, quads, ...others } = createPathDataset([triples.reifier[0]])
+
+  const ptr = new Path({
+    edges: [
+      new Edge({ dataset, quad: quads[0], start: 'subject', end: 'object' })
+    ],
+    factory
+  })
+
+  const expectedPtr = new Path({ dataset, graph: ptr.graph, term: tripleTerm })
 
   return { ...others, dataset, expectedPtr, ptr, quads }
 }

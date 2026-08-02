@@ -933,6 +933,38 @@ describe('Path', () => {
     })
   })
 
+  describe('.reifier', () => {
+    it('should be a method', () => {
+      const { ptr } = datasets.default()
+
+      strictEqual(typeof ptr.reifier, 'function')
+    })
+
+    it('should return an empty array if the ptr has no edge', () => {
+      const { ptr } = datasets.any()
+
+      const result = ptr.reifier()
+
+      strictEqual(result.length, 0)
+    })
+
+    it('should return the pointer to the reifier node of the last edge', () => {
+      const { expectedPtr, ptr } = datasets.reifier()
+
+      const result = ptr.reifier()
+
+      grapoiEqual(result, [expectedPtr])
+    })
+
+    it('should return an empty array if there is no matching rdf:reifies quad', () => {
+      const { ptr } = datasets.reifierNotFound()
+
+      const result = ptr.reifier()
+
+      strictEqual(result.length, 0)
+    })
+  })
+
   describe('.trim', () => {
     it('should be a method', () => {
       const { ptr } = datasets.default()
@@ -946,6 +978,30 @@ describe('Path', () => {
       const result = ptr.trim()
 
       grapoiEqual(result, expectedPtr)
+    })
+  })
+
+  describe('.tripleTerm', () => {
+    it('should be a method', () => {
+      const { ptr } = datasets.default()
+
+      strictEqual(typeof ptr.tripleTerm, 'function')
+    })
+
+    it('should return an empty array if the ptr has no edge', () => {
+      const { ptr } = datasets.any()
+
+      const result = ptr.tripleTerm()
+
+      strictEqual(result.length, 0)
+    })
+
+    it('should return the pointer to the triple term of the last edge', () => {
+      const { expectedPtr, ptr } = datasets.tripleTerm()
+
+      const result = ptr.tripleTerm()
+
+      grapoiEqual(result, [expectedPtr])
     })
   })
 })

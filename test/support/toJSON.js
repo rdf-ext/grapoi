@@ -92,6 +92,13 @@ function termToJSON (term, { blankNodeIds }) {
     json.language = term.language
   }
 
+  if (term.termType === 'Quad') {
+    json.subject = termToJSON(term.subject, { blankNodeIds })
+    json.predicate = termToJSON(term.predicate, { blankNodeIds })
+    json.object = termToJSON(term.object, { blankNodeIds })
+    json.graph = termToJSON(term.graph, { blankNodeIds })
+  }
+
   return json
 }
 

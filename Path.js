@@ -234,6 +234,10 @@ class Path {
     }
   }
 
+  reifier () {
+    return Processor.reifier({ ptr: this })
+  }
+
   trim () {
     return new this.constructor({
       dataset: this.dataset,
@@ -241,6 +245,16 @@ class Path {
       graph: this.graph,
       term: this.term
     })
+  }
+
+  tripleTerm () {
+    const term = Processor.tripleTerm({ ptr: this })
+
+    if (term === undefined) {
+      return []
+    }
+
+    return [new this.constructor({ dataset: this.dataset, factory: this.factory, graph: this.graph, term })]
   }
 }
 

@@ -707,6 +707,56 @@ describe('Grapoi', () => {
     })
   })
 
+  describe('.reifier', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.reifier, 'function')
+    })
+
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
+
+      const result = grapoi.reifier()
+
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should return the pointers to the reifier nodes of the last edge of each ptr', () => {
+      const { expectedGrapoi, grapoi } = datasets.reifier()
+
+      const result = grapoi.reifier()
+
+      grapoiEqual(result, expectedGrapoi)
+    })
+  })
+
+  describe('.tripleTerm', () => {
+    it('should be a method', () => {
+      const { grapoi } = datasets.default()
+
+      strictEqual(typeof grapoi.tripleTerm, 'function')
+    })
+
+    it('should return a new Grapoi instance', () => {
+      const { grapoi } = datasets.default()
+
+      const result = grapoi.tripleTerm()
+
+      strictEqual(result instanceof Grapoi, true)
+      notStrictEqual(result, grapoi)
+    })
+
+    it('should return the pointers to the triple terms of the last edge of each ptr', () => {
+      const { expectedGrapoi, grapoi } = datasets.tripleTerm()
+
+      const result = grapoi.tripleTerm()
+
+      grapoiEqual(result, expectedGrapoi)
+    })
+  })
+
   describe('[Symbol.iterator]', () => {
     it('should return an iterator that loops over all ptrs wrapped into a Grapoi object', () => {
       const { expectedGrapois, grapoi } = datasets.iterator()
